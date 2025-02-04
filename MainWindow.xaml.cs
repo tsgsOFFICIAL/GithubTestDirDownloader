@@ -432,7 +432,7 @@ namespace GithubTestDirDownloader
 
                     client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
 
-                    serverUpdateInfo = JsonSerializer.Deserialize<UpdateInfo>(await client.GetStringAsync("https://raw.githubusercontent.com/tsgsOFFICIAL/GithubTestDirDownloader/main/CS2-AutoAccept/UpdateInfo.json")) ?? new UpdateInfo();
+                    serverUpdateInfo = JsonSerializer.Deserialize<UpdateInfo>(await client.GetStringAsync("https://raw.githubusercontent.com/tsgsOFFICIAL/GithubTestDirDownloader/master/UpdateInfo.json")) ?? new UpdateInfo();
                     serverVersion = serverUpdateInfo.Version!.Split(".").Select(int.Parse).ToList();
                 }
 
