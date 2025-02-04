@@ -25,7 +25,7 @@ namespace GithubTestDirDownloader
                 await downloader.DownloadDirectoryAsync(downloadDirectory);
                 try
                 {
-                    Process.Start(Path.Combine(downloadDirectory, "CS2-AutoAccept"));
+                    Process.Start(Path.Combine(downloadDirectory, "GithubTestDirDownloader"));
                     Environment.Exit(0);
                 }
                 catch (Exception)
