@@ -1,7 +1,7 @@
 {
-    "version": "1.0.0.1",
+    "version": "1.0.0.2",
     "type": "major",
-    "changelog": "First release",
+    "changelog": "Test release",
     "historic_versions": [
         {
             "version": "1.0.0.1",
