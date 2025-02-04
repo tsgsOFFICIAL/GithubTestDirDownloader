@@ -1,0 +1,12 @@
+{
+    "version": "1.0.0.0",
+    "type": "major",
+    "changelog": "First release",
+    "historic_versions": [
+        {
+            "version": "1.0.0.0",
+            "type": "major",
+            "changelog": "First release"
+        }
+    ]
+}
