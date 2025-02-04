@@ -8,8 +8,8 @@ namespace GithubTestDirDownloader
     internal class Updater : IDisposable
     {
         private readonly string _repositoryOwner = "tsgsOFFICIAL";
-        private readonly string _repositoryName = "CS2-AutoAccept";
-        private readonly string _folderPath = "CS2-AutoAccept/bin/Release/net6.0-windows10.0.17763.0/publish/win-x86";
+        private readonly string _repositoryName = "GithubTestDirDownloader";
+        private readonly string _folderPath = "/bin/Release/net8.0-windows/publish/win-x64";
         public event EventHandler<ProgressEventArgs>? DownloadProgress;
 
         /// <summary>
