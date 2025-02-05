@@ -55,7 +55,7 @@ namespace GithubTestDirDownloader
 
             _httpClient = new HttpClient(httpClientHandler);
             _httpClient.Timeout = new TimeSpan(0, 5, 0);
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "GitHubDirectoryDownloader");
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "GithubDirectoryDownloader");
             #endregion
 
             _repositoryOwner = repositoryOwner;
@@ -66,11 +66,22 @@ namespace GithubTestDirDownloader
             _fileHashes = LoadSHAHashes() ?? new Dictionary<string, string>(); // Load the SHA cache or initialize a new one
             _basePath = basePath;
         }
-        private void SaveSHAHashes(string folderPath)
+        private void SaveSHAHashes(string folderPath, HashSet<string> currentFiles)
         {
+            // Remove stale entries from the SHA cache
+            _fileHashes = _fileHashes
+                .Where(kv => currentFiles.Contains(kv.Key))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+
             string cacheJson = JsonSerializer.Serialize(_fileHashes);
             File.WriteAllText(Path.Combine(folderPath, _shaCacheFile), cacheJson);
         }
+
+        //private void SaveSHAHashes(string folderPath)
+        //{
+        //    string cacheJson = JsonSerializer.Serialize(_fileHashes);
+        //    File.WriteAllText(Path.Combine(folderPath, _shaCacheFile), cacheJson);
+        //}
 
         private Dictionary<string, string>? LoadSHAHashes()
         {
@@ -151,10 +162,7 @@ namespace GithubTestDirDownloader
                             else
                             {
                                 // Move file manually if it's already downloaded, from the base path to the download path
-                                File.Move(oldFilePath, localFilePath, true);
-
-                                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                                File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), [$"Skipping unchanged file: {item.Name} [{item.Size}]"]);
+                                File.Copy(oldFilePath, localFilePath, true);
                                 Debug.WriteLine($"Skipping unchanged file: {item.Name}");
                             }
                             break;
@@ -170,6 +178,8 @@ namespace GithubTestDirDownloader
                     }
                 }
 
+                HashSet<string> currentFiles = new HashSet<string>(contents.Select(c => c.Path!));
+                SaveSHAHashes(_basePath, currentFiles);
             }
             else
             {
@@ -184,8 +194,6 @@ namespace GithubTestDirDownloader
         /// <param name="filePath">The local file path where the downloaded file will be saved.</param>
         private async Task DownloadFileAsync(GitHubContent item, string filePath)
         {
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);            
-            File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), [$"Downloading file: {item.Name}"]);
             Debug.WriteLine($"Downloading file: {item.Name}");
 
             try
@@ -198,7 +206,6 @@ namespace GithubTestDirDownloader
 
                     // After downloading, update the hash record
                     _fileHashes[item.Path!] = item.Sha!;
-                    SaveSHAHashes(_basePath);  // Save updated hash cache
 
                     lock (_lockDownloadedSize)
                     {

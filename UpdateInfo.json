@@ -1,7 +1,7 @@
 {
-    "version": "1.0.0.3",
+    "version": "1.0.0.4",
     "type": "major",
-    "changelog": "Test release",
+    "changelog": "Test Prune feature",
     "historic_versions": [
         {
             "version": "1.0.0.2",
