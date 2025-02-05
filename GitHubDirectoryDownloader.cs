@@ -118,7 +118,7 @@ namespace GithubTestDirDownloader
             if (response.IsSuccessStatusCode)
             {
                 string json = await response.Content.ReadAsStringAsync();
-                GitHubContent[] contents = JsonSerializer.Deserialize<GitHubContent[]>(json) ?? Array.Empty<GitHubContent>();
+                GitHubContent[] contents = JsonSerializer.Deserialize<GitHubContent[]>(json) ?? [];
 
                 if (!Directory.Exists(downloadPath))
                 {
@@ -137,6 +137,7 @@ namespace GithubTestDirDownloader
                         case "file":
                             string downloadUrl = item.DownloadUrl!;
                             string localFilePath = Path.Combine(downloadPath, item.Name!);
+                            string oldFilePath = Path.Combine(downloadPath.Replace("\\UPDATE", ""), item.Name!);
 
                             // Check if file needs to be downloaded
                             string? localSha = _fileHashes.ContainsKey(item.Path!) ? _fileHashes[item.Path!] : null;
@@ -149,12 +150,14 @@ namespace GithubTestDirDownloader
                             }
                             else
                             {
+                                // Move file manually if it's already downloaded, from the base path to the download path
+                                File.Move(oldFilePath, localFilePath, true);
+
                                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                                File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), new string[] { $"Skipping unchanged file: {item.Name}" });
+                                File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), [$"Skipping unchanged file: {item.Name} [{item.Size}]"]);
                                 Debug.WriteLine($"Skipping unchanged file: {item.Name}");
                             }
                             break;
-
                         case "dir":
                             string subFolderPath = item.Path!;
                             string subfolderDownloadDirectory = Path.Combine(downloadPath, item.Name!);
@@ -181,30 +184,8 @@ namespace GithubTestDirDownloader
         /// <param name="filePath">The local file path where the downloaded file will be saved.</param>
         private async Task DownloadFileAsync(GitHubContent item, string filePath)
         {
-            string? existingSha = null;
-            string filenameAndExtension = Path.GetFileName(filePath);
-            string oldFilePath = Path.Combine(_basePath, filenameAndExtension);
-
-            // Check if file exists locally
-            if (File.Exists(oldFilePath))
-            {
-                // Get the local file hash
-                using FileStream fileStream = new FileStream(oldFilePath, FileMode.Open, FileAccess.Read);
-                using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
-                byte[] localHash = sha256.ComputeHash(fileStream);
-                existingSha = BitConverter.ToString(localHash).Replace("-", "").ToLowerInvariant();
-            }
-
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            // Compare local hash with the remote SHA (if different or missing, download)
-            if (existingSha == item.Sha)
-            {
-                File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), new string[] { $"Skipping unchanged file [2]: {item.Name}" });
-                Debug.WriteLine($"Skipping unchanged file: {item.Name}");
-                return;
-            }
-
-            File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), new string[] { $"Downloading file: {item.Name}" });
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);            
+            File.AppendAllLines(Path.Combine(desktopPath, "cs2-auto-log.txt"), [$"Downloading file: {item.Name}"]);
             Debug.WriteLine($"Downloading file: {item.Name}");
 
             try

@@ -1,8 +1,13 @@
 {
-    "version": "1.0.0.2",
+    "version": "1.0.0.3",
     "type": "major",
     "changelog": "Test release",
     "historic_versions": [
+        {
+            "version": "1.0.0.2",
+            "type": "major",
+            "changelog": "Test release"
+        },
         {
             "version": "1.0.0.1",
             "type": "major",
