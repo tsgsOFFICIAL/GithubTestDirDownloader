@@ -12,6 +12,7 @@
   <ItemGroup>
     <Content Include="bin\Release\net8.0-windows\publish\win-x64\GithubTestDirDownloader.deps.json" />
     <Content Include="bin\Release\net8.0-windows\publish\win-x64\GithubTestDirDownloader.runtimeconfig.json" />
+    <Content Include="bin\Release\net8.0-windows\publish\win-x64\json1.json" />
   </ItemGroup>
 
   <ItemGroup>
