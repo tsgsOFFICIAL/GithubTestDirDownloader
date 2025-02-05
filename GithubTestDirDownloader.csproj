@@ -6,13 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <FileVersion>1.0.0.4</FileVersion>
+    <FileVersion>1.0.0.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="bin\Release\net8.0-windows\publish\win-x64\GithubTestDirDownloader.deps.json" />
     <Content Include="bin\Release\net8.0-windows\publish\win-x64\GithubTestDirDownloader.runtimeconfig.json" />
-    <Content Include="bin\Release\net8.0-windows\publish\win-x64\json1.json" />
   </ItemGroup>
 
   <ItemGroup>

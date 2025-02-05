@@ -29,7 +29,8 @@ namespace GithubTestDirDownloader
         private List<Task> _downloadTasks;
         private List<Task> _subfolderTasks;
         private Dictionary<string, string> _fileHashes; // For storing file paths and SHA values
-        private readonly string _shaCacheFile = Path.Combine(Environment.ExpandEnvironmentVariables("%APPDATA%"), "CS2 AutoAccept", "sha_cache.cs2_auto"); // Path for cache file
+        private readonly string _shaCacheFile;
+        private HashSet<string> _currentFiles;
         public event EventHandler<ProgressEventArgs>? ProgressUpdated;
 
         /// <summary>
@@ -63,25 +64,23 @@ namespace GithubTestDirDownloader
             _folderPath = folderPath;
             _downloadTasks = new List<Task>();
             _subfolderTasks = new List<Task>();
-            _fileHashes = LoadSHAHashes() ?? new Dictionary<string, string>(); // Load the SHA cache or initialize a new one
             _basePath = basePath;
+            _shaCacheFile = Path.Combine(_basePath, "sha_cache.cs2_auto");
+            _currentFiles = new HashSet<string>();
+            _fileHashes = LoadSHAHashes() ?? new Dictionary<string, string>(); // Load the SHA cache or initialize a new one
         }
-        private void SaveSHAHashes(string folderPath, HashSet<string> currentFiles)
+        private void SaveSHAHashes(HashSet<string> currentFiles)
         {
             // Remove stale entries from the SHA cache
             _fileHashes = _fileHashes
                 .Where(kv => currentFiles.Contains(kv.Key))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            string cacheJson = JsonSerializer.Serialize(_fileHashes);
-            File.WriteAllText(Path.Combine(folderPath, _shaCacheFile), cacheJson);
-        }
+            IEnumerable<string> currentFilesNotInHashes = currentFiles.Except(_fileHashes.Keys);
 
-        //private void SaveSHAHashes(string folderPath)
-        //{
-        //    string cacheJson = JsonSerializer.Serialize(_fileHashes);
-        //    File.WriteAllText(Path.Combine(folderPath, _shaCacheFile), cacheJson);
-        //}
+            string cacheJson = JsonSerializer.Serialize(_fileHashes);
+            File.WriteAllText(_shaCacheFile, cacheJson);
+        }
 
         private Dictionary<string, string>? LoadSHAHashes()
         {
@@ -104,6 +103,8 @@ namespace GithubTestDirDownloader
             Debug.WriteLine("waiting for tasks to complete");
             await Task.WhenAll(_downloadTasks);
             await Task.WhenAll(_subfolderTasks);
+
+            SaveSHAHashes(_currentFiles);
         }
         /// <summary>
         /// Downloads a GitHub directory asynchronously
@@ -117,6 +118,24 @@ namespace GithubTestDirDownloader
 
             HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
             string responseMessage = await response.Content.ReadAsStringAsync();
+
+            // Get the rate limit reset time (epoch seconds)
+            string? resetTimeString = response.Headers.GetValues("x-ratelimit-reset").FirstOrDefault();
+
+            if (long.TryParse(resetTimeString, out long resetEpoch))
+            {
+                // Convert epoch seconds to DateTime in UTC
+                DateTime resetUtc = DateTimeOffset.FromUnixTimeSeconds(resetEpoch).UtcDateTime;
+
+                // Convert UTC to local time
+                DateTime resetLocal = resetUtc.ToLocalTime();
+
+                Debug.WriteLine($"Rate limit resets at: {resetLocal}");
+            }
+            else
+            {
+                Debug.WriteLine("Failed to parse x-ratelimit-reset header.");
+            }
 
             // Rate limit was reached.
             if (responseMessage.Contains("API rate limit exceeded"))
@@ -178,8 +197,7 @@ namespace GithubTestDirDownloader
                     }
                 }
 
-                HashSet<string> currentFiles = new HashSet<string>(contents.Select(c => c.Path!));
-                SaveSHAHashes(_basePath, currentFiles);
+                _currentFiles.UnionWith(contents.Where(c => c.Type == "file").Select(c => c.Path!));
             }
             else
             {
