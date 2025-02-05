@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace GithubTestDirDownloader
 {
@@ -75,8 +71,6 @@ namespace GithubTestDirDownloader
             _fileHashes = _fileHashes
                 .Where(kv => currentFiles.Contains(kv.Key))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-            IEnumerable<string> currentFilesNotInHashes = currentFiles.Except(_fileHashes.Keys);
 
             string cacheJson = JsonSerializer.Serialize(_fileHashes);
             File.WriteAllText(_shaCacheFile, cacheJson);
